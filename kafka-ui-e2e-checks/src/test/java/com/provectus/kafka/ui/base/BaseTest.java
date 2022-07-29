@@ -23,6 +23,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.testcontainers.Testcontainers;
 import org.testcontainers.containers.BrowserWebDriverContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
@@ -35,6 +36,8 @@ import java.util.Arrays;
 @DisplayNameGeneration(CamelCaseToSpacedDisplayNameGenerator.class)
 public class BaseTest {
 
+    public static final String SELENIUM_IMAGE_NAME = "selenium/standalone-chrome";
+    public static final String SELENIARM_STANDALONE_CHROMIUM = "seleniarm/standalone-chromium";
     protected Pages pages = Pages.INSTANCE;
     protected Helpers helpers = Helpers.INSTANCE;
 
@@ -60,16 +63,34 @@ public class BaseTest {
     }
 
     @BeforeAll
-    public static void start() {
-        DockerImageName image = DockerImageName.parse(IMAGE_NAME).withTag(IMAGE_TAG);
+    public static void start()  {
+
+        DockerImageName image =  isARM64()
+            ? DockerImageName.parse(SELENIARM_STANDALONE_CHROMIUM).asCompatibleSubstituteFor(SELENIUM_IMAGE_NAME)
+            : DockerImageName.parse(SELENIUM_IMAGE_NAME);
+        //.withTag(IMAGE_TAG);
+        log.info("Using [{}] as image name for chrome", image.getUnversionedPart());
+
         webDriverContainer = new BrowserWebDriverContainer<>(image)
-                .withCapabilities(new ChromeOptions().addArguments("--disable-dev-shm-usage"))
+            .withEnv("JAVA_OPTS", "-Dwebdriver.chrome.whitelistedIps=")
+                .withCapabilities(new ChromeOptions()
+//                    .addArguments("--no-sandbox")
+                    .addArguments("--disable-dev-shm-usage")
+//                    .addArguments("--headless")
+//                    .addArguments("--disable-gpu")
+                    .addArguments("--verbose")
+                )
                 .waitingFor(Wait.forHttp("/"))
+            .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("====== CHROME: "))
                 .waitingFor(Wait.forLogMessage(".*Started Selenium Standalone.*", 1));
-        Testcontainers.exposeHostPorts(8080);
-        webDriverContainer.start();
-        webDriverContainer.isRunning();
-        webDriverContainer.isHostAccessible();
+        try {
+            Testcontainers.exposeHostPorts(8080);
+            webDriverContainer.start();
+            webDriverContainer.isRunning();
+            webDriverContainer.isHostAccessible();
+        } catch (Throwable e) {
+            log.error("Couldn't start container", e);
+        }
     }
 
     @AfterAll
@@ -133,5 +154,9 @@ public class BaseTest {
                         .forEach(File::delete);
             }
         }
+    }
+
+    private static boolean isARM64() {
+        return System.getProperty("os.arch").equals("aarch64");
     }
 }
