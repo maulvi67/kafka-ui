@@ -4,6 +4,7 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import com.provectus.kafka.ui.api.model.CompatibilityLevel;
+import com.provectus.kafka.ui.api.model.SchemaType;
 import com.provectus.kafka.ui.utils.BrowserUtils;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
@@ -17,7 +18,7 @@ public class SchemaEditView {
     SelenideElement newSchemaTextArea = $("#newSchema [wrap]");
 
     @Step
-    public SchemaEditView selectSchemaTypeFromDropdown(SchemaCreateView.SchemaType schemaType) {
+    public SchemaEditView selectSchemaTypeFromDropdown(SchemaType schemaType) {
         $x("//ul[@name='schemaType']").click();
         $x("//li[text()='" + schemaType.getValue() + "']").click();
         return this;
