@@ -1,19 +1,10 @@
 package com.provectus.kafka.ui;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.provectus.kafka.ui.model.ConsumerGroupDTO;
 import com.provectus.kafka.ui.model.ConsumerGroupsPageResponseDTO;
-import java.io.Closeable;
-import java.time.Duration;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Properties;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -22,6 +13,17 @@ import org.apache.kafka.common.utils.Bytes;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.reactive.server.WebTestClient;
+
+import java.io.Closeable;
+import java.time.Duration;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 public class KafkaConsumerGroupTests extends AbstractIntegrationTest {
@@ -126,6 +128,21 @@ public class KafkaConsumerGroupTests extends AbstractIntegrationTest {
               assertThat(page.getConsumerGroups())
                   .isSortedAccordingTo(Comparator.comparing(ConsumerGroupDTO::getGroupId).reversed());
             });
+
+      webTestClient
+          .get()
+          .uri("/api/clusters/{clusterName}/consumer-groups/paged?perPage=10&&search"
+              + "=cgPageTest&orderBy=MEMBERS&sortOrder=DESC", LOCAL)
+          .exchange()
+          .expectStatus()
+          .isOk()
+          .expectBody(ConsumerGroupsPageResponseDTO.class)
+          .value(page -> {
+            assertThat(page.getPageCount()).isEqualTo(1);
+            assertThat(page.getConsumerGroups().size()).isEqualTo(5);
+            assertThat(page.getConsumerGroups())
+                .isSortedAccordingTo(Comparator.comparing(ConsumerGroupDTO::getMembers).reversed());
+          });
     }
   }
 
@@ -133,7 +150,7 @@ public class KafkaConsumerGroupTests extends AbstractIntegrationTest {
     String topicName = createTopicWithRandomName();
     var consumers =
         Stream.generate(() -> {
-          String groupId = consumerGroupPrefix + UUID.randomUUID();
+          String groupId = consumerGroupPrefix + RandomStringUtils.randomAlphabetic(5);
           val consumer = createTestConsumerWithGroupId(groupId);
           consumer.subscribe(List.of(topicName));
           consumer.poll(Duration.ofMillis(100));
