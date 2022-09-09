@@ -1,14 +1,6 @@
 package com.provectus.kafka.ui;
 
-import com.provectus.kafka.ui.model.CompatibilityLevelDTO;
-import com.provectus.kafka.ui.model.NewSchemaSubjectDTO;
-import com.provectus.kafka.ui.model.SchemaSubjectDTO;
-import com.provectus.kafka.ui.model.SchemaSubjectsResponseDTO;
-import com.provectus.kafka.ui.model.SchemaTypeDTO;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import com.provectus.kafka.ui.model.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.jupiter.api.Assertions;
@@ -23,6 +15,11 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.testcontainers.shaded.org.hamcrest.MatcherAssert;
 import org.testcontainers.shaded.org.hamcrest.Matchers;
 import reactor.core.publisher.Mono;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @Slf4j
 class SchemaRegistryServiceTests extends AbstractIntegrationTest {
@@ -272,6 +269,21 @@ class SchemaRegistryServiceTests extends AbstractIntegrationTest {
               CompatibilityLevelDTO.CompatibilityEnum.FULL;
           assertSchemaWhenGetLatest(subject, listEntityExchangeResult, expectedCompatibility);
         });
+  }
+
+  @Test
+  void shouldCreateNewSchemaWhenSubjectIncludesNonAsciiCharacters() {
+    String schema =
+        "{\"subject\":\"test/test\",\"schemaType\":\"JSON\",\"schema\":"
+        + "\"{\\\"type\\\": \\\"string\\\"}\"}";
+
+    webTestClient
+        .post()
+        .uri("/api/clusters/{clusterName}/schemas", LOCAL)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromValue(schema))
+        .exchange()
+        .expectStatus().isOk();
   }
 
   private void createNewSubjectAndAssert(String subject) {

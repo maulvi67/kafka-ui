@@ -1,36 +1,8 @@
 package com.provectus.kafka.ui.service;
 
-import static org.springframework.http.HttpStatus.CONFLICT;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
-
-import com.provectus.kafka.ui.exception.SchemaCompatibilityException;
-import com.provectus.kafka.ui.exception.SchemaFailedToDeleteException;
-import com.provectus.kafka.ui.exception.SchemaNotFoundException;
-import com.provectus.kafka.ui.exception.SchemaTypeNotSupportedException;
-import com.provectus.kafka.ui.exception.UnprocessableEntityException;
-import com.provectus.kafka.ui.exception.ValidationException;
-import com.provectus.kafka.ui.model.CompatibilityLevelDTO;
-import com.provectus.kafka.ui.model.InternalSchemaRegistry;
-import com.provectus.kafka.ui.model.KafkaCluster;
-import com.provectus.kafka.ui.model.NewSchemaSubjectDTO;
-import com.provectus.kafka.ui.model.SchemaSubjectDTO;
-import com.provectus.kafka.ui.model.SchemaTypeDTO;
-import com.provectus.kafka.ui.model.schemaregistry.ErrorResponse;
-import com.provectus.kafka.ui.model.schemaregistry.InternalCompatibilityCheck;
-import com.provectus.kafka.ui.model.schemaregistry.InternalCompatibilityLevel;
-import com.provectus.kafka.ui.model.schemaregistry.InternalNewSchema;
-import com.provectus.kafka.ui.model.schemaregistry.SubjectIdResponse;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Collections;
-import java.util.Formatter;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import com.provectus.kafka.ui.exception.*;
+import com.provectus.kafka.ui.model.*;
+import com.provectus.kafka.ui.model.schemaregistry.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +21,15 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import static org.springframework.http.HttpStatus.*;
 
 @Service
 @Slf4j
@@ -381,7 +362,7 @@ public class SchemaRegistryService {
     final var builder = UriComponentsBuilder
         .fromHttpUrl(schemaRegistry.getUri() + path);
     builder.queryParams(queryParams);
-    return builder.buildAndExpand(uriVariables.toArray()).toUri();
+    return builder.build(uriVariables.toArray());
   }
 
   private Function<ClientResponse, Mono<? extends Throwable>> errorOnSchemaDeleteFailure(String schemaName) {
