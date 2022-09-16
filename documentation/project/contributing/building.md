@@ -26,7 +26,7 @@ Once you installed the prerequisites and cloned the repository, run the followin
 
 - In case you want to build `kafka-ui-api` by skipping the tests
 ```sh
-./mvnw clean install -Dmaven.test.skip=true -Pprod
+./mvnw clean install -Pprod
 ``` 
 
 - To build only the `kafka-ui-api` you can use this command:
