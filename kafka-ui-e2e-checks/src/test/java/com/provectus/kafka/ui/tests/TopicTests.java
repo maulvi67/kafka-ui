@@ -99,7 +99,8 @@ public class TopicTests extends BaseTest {
                 .waitUntilScreenReady()
                 .openTopic(TOPIC_NAME_FOR_DELETE)
                 .waitUntilScreenReady()
-                .deleteTopic()
+                .deleteTopic();
+        pages.openTopicsList(CLUSTER_NAME)
                 .waitUntilScreenReady()
                 .isTopicNotVisible(TOPIC_NAME_FOR_DELETE);
         TOPIC_NAME_LIST.remove(TOPIC_NAME_FOR_DELETE);
