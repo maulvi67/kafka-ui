@@ -15,7 +15,8 @@ import static com.codeborne.selenide.Selenide.$x;
 
 public class SchemaEditView {
 
-    SelenideElement newSchemaTextArea = $("#newSchema [wrap]");
+    protected SelenideElement newSchemaTextArea = $("#newSchema [wrap]");
+    protected SelenideElement schemaTypeDropDown = $x("//ul[@name='schemaType']");
 
     @Step
     public SchemaEditView selectSchemaTypeFromDropdown(SchemaType schemaType) {
@@ -49,5 +50,17 @@ public class SchemaEditView {
         $(By.xpath("//*[contains(text(),'Remove')]")).click();
         $(By.xpath("//*[text()='Confirm']")).shouldBe(Condition.visible).click();
         return new SchemaRegistryList();
+    }
+
+    @Step
+    public boolean isSchemaDropDownDisabled(){
+        boolean disabled = false;
+        try{
+           String attribute = schemaTypeDropDown.getAttribute("disabled");
+           disabled = true;
+        }
+        catch (Throwable ignored){
+        }
+       return disabled;
     }
 }
