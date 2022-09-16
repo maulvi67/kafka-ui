@@ -4,6 +4,16 @@ import com.provectus.kafka.ui.model.ConsumerGroupOrderingDTO;
 import com.provectus.kafka.ui.model.InternalConsumerGroup;
 import com.provectus.kafka.ui.model.KafkaCluster;
 import com.provectus.kafka.ui.model.SortOrderDTO;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
@@ -19,11 +29,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
-
-import javax.annotation.Nullable;
-import java.util.*;
-import java.util.function.ToIntFunction;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -156,7 +161,7 @@ public class ConsumerGroupService {
         };
         return Comparator.comparingInt(statesPriorities);
       case MEMBERS:
-        return Comparator.comparingInt(cg -> cg.members().size());
+        return Comparator.comparingInt(cg -> -cg.members().size());
       default:
         throw new IllegalStateException("Unsupported order by: " + orderBy);
     }
