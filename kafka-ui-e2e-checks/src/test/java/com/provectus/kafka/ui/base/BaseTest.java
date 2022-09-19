@@ -37,6 +37,7 @@ public class BaseTest {
 
   public static final String SELENIUM_IMAGE_NAME = "selenium/standalone-chrome:103.0";
   public static final String SELENIARM_STANDALONE_CHROMIUM = "seleniarm/standalone-chromium:103.0";
+  public static final String CLUSTER_NAME = "local";
   protected Pages pages = Pages.INSTANCE;
   protected Helpers helpers = Helpers.INSTANCE;
 
