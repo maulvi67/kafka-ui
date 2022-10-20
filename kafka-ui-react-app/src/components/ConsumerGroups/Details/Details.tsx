@@ -1,19 +1,17 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import useAppParams from 'lib/hooks/useAppParams';
 import {
   clusterConsumerGroupResetRelativePath,
+  clusterConsumerGroupsPath,
   ClusterGroupParam,
 } from 'lib/paths';
+import Search from 'components/common/Search/Search';
 import PageLoader from 'components/common/PageLoader/PageLoader';
-import ConfirmationModal from 'components/common/ConfirmationModal/ConfirmationModal';
 import ClusterContext from 'components/contexts/ClusterContext';
 import PageHeading from 'components/common/PageHeading/PageHeading';
-import VerticalElipsisIcon from 'components/common/Icons/VerticalElipsisIcon';
 import * as Metrics from 'components/common/Metrics';
 import { Tag } from 'components/common/Tag/Tag.styled';
-import Dropdown from 'components/common/Dropdown/Dropdown';
-import DropdownItem from 'components/common/Dropdown/DropdownItem';
 import groupBy from 'lodash/groupBy';
 import { Table } from 'components/common/table/Table/Table.styled';
 import TableHeaderCell from 'components/common/table/TableHeaderCell/TableHeaderCell';
@@ -26,11 +24,15 @@ import {
   getAreConsumerGroupDetailsFulfilled,
 } from 'redux/reducers/consumerGroups/consumerGroupsSlice';
 import getTagColor from 'components/common/Tag/getTagColor';
+import { Dropdown, DropdownItem } from 'components/common/Dropdown';
+import { ControlPanelWrapper } from 'components/common/ControlPanel/ControlPanel.styled';
 
 import ListItem from './ListItem';
 
 const Details: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const searchValue = searchParams.get('q') || '';
   const { isReadOnly } = React.useContext(ClusterContext);
   const { consumerGroupID, clusterName } = useAppParams<ClusterGroupParam>();
   const dispatch = useAppDispatch();
@@ -40,17 +42,14 @@ const Details: React.FC = () => {
   const isDeleted = useAppSelector(getIsConsumerGroupDeleted);
   const isFetched = useAppSelector(getAreConsumerGroupDetailsFulfilled);
 
-  const [isConfirmationModalVisible, setIsConfirmationModalVisible] =
-    React.useState<boolean>(false);
-
   React.useEffect(() => {
     dispatch(fetchConsumerGroupDetails({ clusterName, consumerGroupID }));
   }, [clusterName, consumerGroupID, dispatch]);
 
   const onDelete = () => {
-    setIsConfirmationModalVisible(false);
     dispatch(deleteConsumerGroup({ clusterName, consumerGroupID }));
   };
+
   React.useEffect(() => {
     if (isDeleted) {
       navigate('../');
@@ -67,15 +66,28 @@ const Details: React.FC = () => {
 
   const partitionsByTopic = groupBy(consumerGroup.partitions, 'topic');
 
+  const filteredPartitionsByTopic = Object.keys(partitionsByTopic).filter(
+    (el) => el.includes(searchValue)
+  );
+
+  const currentPartitionsByTopic = searchValue.length
+    ? filteredPartitionsByTopic
+    : Object.keys(partitionsByTopic);
+
   return (
     <div>
       <div>
-        <PageHeading text={consumerGroupID}>
+        <PageHeading
+          text={consumerGroupID}
+          backTo={clusterConsumerGroupsPath(clusterName)}
+          backText="Consumers"
+        >
           {!isReadOnly && (
-            <Dropdown label={<VerticalElipsisIcon />} right>
+            <Dropdown>
               <DropdownItem onClick={onResetOffsets}>Reset offset</DropdownItem>
               <DropdownItem
-                onClick={() => setIsConfirmationModalVisible(true)}
+                confirm="Are you sure you want to delete this consumer group?"
+                onClick={onDelete}
                 danger
               >
                 Delete consumer group
@@ -87,7 +99,9 @@ const Details: React.FC = () => {
       <Metrics.Wrapper>
         <Metrics.Section>
           <Metrics.Indicator label="State">
-            <Tag color={getTagColor(consumerGroup)}>{consumerGroup.state}</Tag>
+            <Tag color={getTagColor(consumerGroup.state)}>
+              {consumerGroup.state}
+            </Tag>
           </Metrics.Indicator>
           <Metrics.Indicator label="Members">
             {consumerGroup.members}
@@ -101,17 +115,24 @@ const Details: React.FC = () => {
           <Metrics.Indicator label="Coordinator ID">
             {consumerGroup.coordinator?.id}
           </Metrics.Indicator>
+          <Metrics.Indicator label="Total lag">
+            {consumerGroup.messagesBehind}
+          </Metrics.Indicator>
         </Metrics.Section>
       </Metrics.Wrapper>
+      <ControlPanelWrapper hasInput style={{ margin: '16px 0 20px' }}>
+        <Search placeholder="Search by Topic Name" />
+      </ControlPanelWrapper>
       <Table isFullwidth>
         <thead>
           <tr>
             <TableHeaderCell> </TableHeaderCell>
             <TableHeaderCell title="Topic" />
+            <TableHeaderCell title="Messages behind" />
           </tr>
         </thead>
         <tbody>
-          {Object.keys(partitionsByTopic).map((key) => (
+          {currentPartitionsByTopic.map((key) => (
             <ListItem
               clusterName={clusterName}
               consumers={partitionsByTopic[key]}
@@ -121,13 +142,6 @@ const Details: React.FC = () => {
           ))}
         </tbody>
       </Table>
-      <ConfirmationModal
-        isOpen={isConfirmationModalVisible}
-        onCancel={() => setIsConfirmationModalVisible(false)}
-        onConfirm={onDelete}
-      >
-        Are you sure you want to delete this consumer group?
-      </ConfirmationModal>
     </div>
   );
 };

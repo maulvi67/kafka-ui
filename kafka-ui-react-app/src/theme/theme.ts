@@ -60,10 +60,38 @@ const Colors = {
 };
 
 const theme = {
+  link: {
+    color: Colors.brand[50],
+    hoverColor: Colors.brand[60],
+  },
+  hr: {
+    backgroundColor: Colors.neutral[5],
+  },
+  code: {
+    backgroundColor: Colors.neutral[5],
+    color: Colors.red[55],
+  },
+  list: {
+    label: {
+      color: Colors.neutral[50],
+    },
+    meta: {
+      color: Colors.neutral[30],
+    },
+  },
+  progressBar: {
+    backgroundColor: Colors.neutral[3],
+    compleatedColor: Colors.green[40],
+    borderColor: Colors.neutral[10],
+  },
   layout: {
+    backgroundColor: Colors.neutral[0],
     minWidth: '1200px',
     navBarWidth: '201px',
-    navBarHeight: '3.25rem',
+    navBarHeight: '53px',
+    rightSidebarWidth: '70vw',
+    filtersSidebarWidth: '300px',
+
     stuffColor: Colors.neutral[5],
     stuffBorderColor: Colors.neutral[10],
     overlay: {
@@ -73,11 +101,31 @@ const theme = {
       color: Colors.neutral[20],
     },
   },
+  pageHeading: {
+    height: '64px',
+    dividerColor: Colors.neutral[30],
+    backLink: {
+      color: {
+        normal: Colors.brand[70],
+        hover: Colors.brand[60],
+      },
+    },
+  },
   panelColor: Colors.neutral[0],
-  breadcrumb: Colors.neutral[30],
   connectEditWarning: Colors.yellow[10],
   dropdown: {
-    color: Colors.red[50],
+    backgroundColor: Colors.neutral[0],
+    borderColor: Colors.neutral[5],
+    shadow: Colors.transparency[20],
+    item: {
+      color: {
+        danger: Colors.red[60],
+      },
+      backgroundColor: {
+        default: Colors.neutral[0],
+        hover: Colors.neutral[5],
+      },
+    },
   },
   ksqlDb: {
     query: {
@@ -110,7 +158,7 @@ const theme = {
     },
     variants: {
       1: {
-        fontSize: '24px',
+        fontSize: '20px',
         lineHeight: '32px',
       },
       2: {
@@ -126,6 +174,7 @@ const theme = {
       4: {
         fontSize: '14px',
         lineHeight: '20px',
+        fontWeight: 500,
       },
       5: {
         fontSize: '12px',
@@ -259,18 +308,23 @@ const theme = {
     border: {
       top: Colors.neutral[5],
       bottom: Colors.neutral[5],
+      contrast: Colors.neutral[30],
     },
     overlay: Colors.transparency[10],
     shadow: Colors.transparency[20],
     deletionTextColor: Colors.neutral[70],
   },
   table: {
+    actionBar: {
+      backgroundColor: Colors.neutral[0],
+    },
     th: {
       backgroundColor: {
         normal: Colors.neutral[0],
       },
       color: {
-        normal: Colors.neutral[50],
+        sortable: Colors.neutral[30],
+        normal: Colors.neutral[60],
         hover: Colors.brand[50],
         active: Colors.brand[50],
       },
@@ -285,16 +339,25 @@ const theme = {
     },
     tr: {
       backgroundColor: {
+        normal: Colors.neutral[0],
         hover: Colors.neutral[5],
       },
     },
     link: {
       color: {
         normal: Colors.neutral[90],
+        hover: Colors.neutral[50],
+        active: Colors.neutral[90],
       },
+    },
+    expander: {
+      normal: Colors.brand[50],
+      hover: Colors.brand[20],
+      disabled: Colors.neutral[10],
     },
   },
   primaryTab: {
+    height: '41px',
     color: {
       normal: Colors.neutral[50],
       hover: Colors.neutral[90],
@@ -402,22 +465,6 @@ const theme = {
     },
     color: Colors.neutral[90],
   },
-  pagination: {
-    backgroundColor: Colors.neutral[0],
-    currentPage: Colors.neutral[10],
-    borderColor: {
-      normal: Colors.neutral[30],
-      hover: Colors.neutral[50],
-      active: Colors.neutral[70],
-      disabled: Colors.neutral[20],
-    },
-    color: {
-      normal: Colors.neutral[90],
-      hover: Colors.neutral[90],
-      active: Colors.neutral[90],
-      disabled: Colors.neutral[20],
-    },
-  },
   switch: {
     unchecked: Colors.brand[20],
     checked: Colors.brand[50],
@@ -466,10 +513,16 @@ const theme = {
       value: Colors.neutral[80],
       meta: Colors.neutral[30],
     },
+    liderReplica: {
+      color: Colors.green[60],
+    },
   },
   dangerZone: {
     borderColor: Colors.neutral[10],
-    color: Colors.red[50],
+    color: {
+      title: Colors.red[50],
+      warningMessage: Colors.neutral[50],
+    },
   },
   configList: {
     color: Colors.neutral[30],
@@ -487,6 +540,7 @@ const theme = {
   },
   icons: {
     closeIcon: Colors.neutral[30],
+    deleteIcon: Colors.red[20],
     warningIcon: Colors.yellow[20],
     messageToggleIcon: {
       normal: Colors.brand[50],
@@ -519,6 +573,9 @@ const theme = {
   },
   editFilterText: {
     color: Colors.brand[50],
+  },
+  statictics: {
+    createdAtColor: Colors.neutral[50],
   },
 };
 

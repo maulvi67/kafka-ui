@@ -1,178 +1,172 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import {
-  clusterTopicMessagesRelativePath,
-  RouteParamsClusterTopic,
-} from 'lib/paths';
-import jsf from 'json-schema-faker';
-import {
-  fetchTopicMessageSchema,
-  fetchTopicDetails,
-} from 'redux/reducers/topics/topicsSlice';
-import { useAppDispatch, useAppSelector } from 'lib/hooks/redux';
+import { RouteParamsClusterTopic } from 'lib/paths';
 import { Button } from 'components/common/Button/Button';
 import Editor from 'components/common/Editor/Editor';
-import PageLoader from 'components/common/PageLoader/PageLoader';
-import {
-  getMessageSchemaByTopicName,
-  getPartitionsByTopicName,
-  getTopicMessageSchemaFetched,
-} from 'redux/reducers/topics/selectors';
 import Select, { SelectOption } from 'components/common/Select/Select';
 import useAppParams from 'lib/hooks/useAppParams';
-import Heading from 'components/common/heading/Heading.styled';
-import { messagesApiClient } from 'lib/api';
-import { showAlert, showServerError } from 'lib/errorHandling';
+import { showAlert } from 'lib/errorHandling';
+import { useSendMessage, useTopicDetails } from 'lib/hooks/api/topics';
+import { InputLabel } from 'components/common/Input/InputLabel.styled';
+import { useSerdes } from 'lib/hooks/api/topicMessages';
+import { SerdeUsage } from 'generated-sources';
 
-import validateMessage from './validateMessage';
 import * as S from './SendMessage.styled';
+import {
+  getDefaultValues,
+  getPartitionOptions,
+  getSerdeOptions,
+  validateBySchema,
+} from './utils';
 
-type FieldValues = Partial<{
+interface FormType {
   key: string;
   content: string;
   headers: string;
-  partition: number | string;
-}>;
+  partition: number;
+  keySerde: string;
+  valueSerde: string;
+}
 
-const SendMessage: React.FC = () => {
-  const dispatch = useAppDispatch();
+const SendMessage: React.FC<{ onSubmit: () => void }> = ({ onSubmit }) => {
   const { clusterName, topicName } = useAppParams<RouteParamsClusterTopic>();
-  const navigate = useNavigate();
-
-  jsf.option('fillProperties', false);
-  jsf.option('alwaysFakeOptionals', true);
-
-  React.useEffect(() => {
-    dispatch(fetchTopicMessageSchema({ clusterName, topicName }));
-  }, [clusterName, dispatch, topicName]);
-
-  const messageSchema = useAppSelector((state) =>
-    getMessageSchemaByTopicName(state, topicName)
-  );
-  const partitions = useAppSelector((state) =>
-    getPartitionsByTopicName(state, topicName)
-  );
-  const schemaIsFetched = useAppSelector(getTopicMessageSchemaFetched);
-  const selectPartitionOptions: Array<SelectOption> = partitions.map((p) => {
-    const value = String(p.partition);
-    return { value, label: value };
+  const { data: topic } = useTopicDetails({ clusterName, topicName });
+  const { data: serdes = {} } = useSerdes({
+    clusterName,
+    topicName,
+    use: SerdeUsage.SERIALIZE,
   });
+  const sendMessage = useSendMessage({ clusterName, topicName });
 
-  const keyDefaultValue = React.useMemo(() => {
-    if (!schemaIsFetched || !messageSchema) {
-      return undefined;
-    }
-    return JSON.stringify(
-      jsf.generate(JSON.parse(messageSchema.key.schema)),
-      null,
-      '\t'
-    );
-  }, [messageSchema, schemaIsFetched]);
-
-  const contentDefaultValue = React.useMemo(() => {
-    if (!schemaIsFetched || !messageSchema) {
-      return undefined;
-    }
-    return JSON.stringify(
-      jsf.generate(JSON.parse(messageSchema.value.schema)),
-      null,
-      '\t'
-    );
-  }, [messageSchema, schemaIsFetched]);
-
+  const defaultValues = React.useMemo(() => getDefaultValues(serdes), [serdes]);
+  const partitionOptions: SelectOption[] = React.useMemo(
+    () => getPartitionOptions(topic?.partitions || []),
+    [topic]
+  );
   const {
     handleSubmit,
-    formState: { isSubmitting, isDirty },
+    formState: { isSubmitting },
     control,
-    reset,
-  } = useForm<FieldValues>({
+  } = useForm<FormType>({
     mode: 'onChange',
     defaultValues: {
-      key: keyDefaultValue,
-      content: contentDefaultValue,
-      headers: undefined,
-      partition: undefined,
+      ...defaultValues,
+      partition: Number(partitionOptions[0].value),
     },
   });
 
-  useEffect(() => {
-    reset({
-      key: keyDefaultValue,
-      content: contentDefaultValue,
-    });
-  }, [keyDefaultValue, contentDefaultValue, reset]);
+  const submit = async ({
+    keySerde,
+    valueSerde,
+    key,
+    content,
+    headers,
+    partition,
+  }: FormType) => {
+    let errors: string[] = [];
 
-  const onSubmit = async (data: {
-    key: string;
-    content: string;
-    headers: string;
-    partition: number;
-  }) => {
-    if (messageSchema) {
-      const { partition, key, content } = data;
-      const errors = validateMessage(key, content, messageSchema);
-      if (data.headers) {
-        try {
-          JSON.parse(data.headers);
-        } catch (error) {
-          errors.push('Wrong header format');
-        }
-      }
-      if (errors.length > 0) {
-        const errorsHtml = errors.map((e) => `<li>${e}</li>`).join('');
-        showAlert('error', {
-          id: `${clusterName}-${topicName}-createTopicMessageError`,
-          title: 'Validation Error',
-          message: `<ul>${errorsHtml}</ul>`,
-        });
-        return;
-      }
-      const headers = data.headers ? JSON.parse(data.headers) : undefined;
-      try {
-        await messagesApiClient.sendTopicMessages({
-          clusterName,
-          topicName,
-          createTopicMessage: {
-            key: !key ? null : key,
-            content: !content ? null : content,
-            headers,
-            partition: !partition ? 0 : partition,
-          },
-        });
-        dispatch(fetchTopicDetails({ clusterName, topicName }));
-      } catch (e) {
-        showServerError(e as Response, {
-          id: `${clusterName}-${topicName}-sendTopicMessagesError`,
-          message: `Error in sending a message to ${topicName}`,
-        });
-      }
-      navigate(`../${clusterTopicMessagesRelativePath}`);
+    if (keySerde) {
+      const selectedKeySerde = serdes.key?.find((k) => k.name === keySerde);
+      errors = validateBySchema(key, selectedKeySerde?.schema, 'key');
     }
+
+    if (valueSerde) {
+      const selectedValue = serdes.value?.find((v) => v.name === valueSerde);
+      errors = [
+        ...errors,
+        ...validateBySchema(content, selectedValue?.schema, 'content'),
+      ];
+    }
+
+    let parsedHeaders;
+    if (headers) {
+      try {
+        parsedHeaders = JSON.parse(headers);
+      } catch (error) {
+        errors.push('Wrong header format');
+      }
+    }
+
+    if (errors.length > 0) {
+      showAlert('error', {
+        id: `${clusterName}-${topicName}-createTopicMessageError`,
+        title: 'Validation Error',
+        message: (
+          <ul>
+            {errors.map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+          </ul>
+        ),
+      });
+      return;
+    }
+
+    await sendMessage.mutateAsync({
+      key: key || null,
+      content: content || null,
+      headers: parsedHeaders,
+      partition: partition || 0,
+      keySerde,
+      valueSerde,
+    });
+    onSubmit();
   };
 
-  if (!schemaIsFetched) {
-    return <PageLoader />;
-  }
   return (
     <S.Wrapper>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(submit)}>
         <S.Columns>
           <S.Column>
-            <Heading level={3}>Partition</Heading>
+            <InputLabel>Partition</InputLabel>
             <Controller
               control={control}
               name="partition"
-              defaultValue={selectPartitionOptions[0].value}
-              render={({ field: { name, onChange } }) => (
+              render={({ field: { name, onChange, value } }) => (
                 <Select
                   id="selectPartitionOptions"
                   aria-labelledby="selectPartitionOptions"
                   name={name}
                   onChange={onChange}
                   minWidth="100%"
-                  options={selectPartitionOptions}
-                  value={selectPartitionOptions[0].value}
+                  options={partitionOptions}
+                  value={value}
+                />
+              )}
+            />
+          </S.Column>
+          <S.Column>
+            <InputLabel>Key Serde</InputLabel>
+            <Controller
+              control={control}
+              name="keySerde"
+              render={({ field: { name, onChange, value } }) => (
+                <Select
+                  id="selectKeySerdeOptions"
+                  aria-labelledby="selectKeySerdeOptions"
+                  name={name}
+                  onChange={onChange}
+                  minWidth="100%"
+                  options={getSerdeOptions(serdes.key || [])}
+                  value={value}
+                />
+              )}
+            />
+          </S.Column>
+          <S.Column>
+            <InputLabel>Content Serde</InputLabel>
+            <Controller
+              control={control}
+              name="valueSerde"
+              render={({ field: { name, onChange, value } }) => (
+                <Select
+                  id="selectValueSerdeOptions"
+                  aria-labelledby="selectValueSerdeOptions"
+                  name={name}
+                  onChange={onChange}
+                  minWidth="100%"
+                  options={getSerdeOptions(serdes.value || [])}
+                  value={value}
                 />
               )}
             />
@@ -181,7 +175,7 @@ const SendMessage: React.FC = () => {
 
         <S.Columns>
           <S.Column>
-            <Heading level={3}>Key</Heading>
+            <InputLabel>Key</InputLabel>
             <Controller
               control={control}
               name="key"
@@ -196,7 +190,7 @@ const SendMessage: React.FC = () => {
             />
           </S.Column>
           <S.Column>
-            <Heading level={3}>Content</Heading>
+            <InputLabel>Content</InputLabel>
             <Controller
               control={control}
               name="content"
@@ -213,7 +207,7 @@ const SendMessage: React.FC = () => {
         </S.Columns>
         <S.Columns>
           <S.Column>
-            <Heading level={3}>Headers</Heading>
+            <InputLabel>Headers</InputLabel>
             <Controller
               control={control}
               name="headers"
@@ -233,9 +227,9 @@ const SendMessage: React.FC = () => {
           buttonSize="M"
           buttonType="primary"
           type="submit"
-          disabled={!isDirty || isSubmitting}
+          disabled={isSubmitting}
         >
-          Send
+          Produce Message
         </Button>
       </form>
     </S.Wrapper>

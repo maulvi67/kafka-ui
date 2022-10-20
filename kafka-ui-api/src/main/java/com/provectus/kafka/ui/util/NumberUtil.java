@@ -1,7 +1,6 @@
 package com.provectus.kafka.ui.util;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.math.NumberUtils;
 
 @Slf4j
 public class NumberUtil {
@@ -9,11 +8,9 @@ public class NumberUtil {
   private NumberUtil() {
   }
 
-  public static boolean isNumeric(Object value) {
-    return value != null && NumberUtils.isCreatable(value.toString());
-  }
 
-  public static float parserClusterVersion(String version) {
+  public static float parserClusterVersion(String version) throws NumberFormatException {
+    log.trace("Parsing cluster version [{}]", version);
     try {
       final String[] parts = version.split("\\.");
       if (parts.length > 2) {
@@ -21,7 +18,7 @@ public class NumberUtil {
       }
       return Float.parseFloat(version.split("-")[0]);
     } catch (Exception e) {
-      log.error("Conversion clusterVersion {} to float value failed", version);
+      log.error("Conversion clusterVersion [{}] to float value failed", version, e);
       throw e;
     }
   }

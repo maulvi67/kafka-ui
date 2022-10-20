@@ -131,7 +131,6 @@
             <artifactId>netty-resolver-dns-native-macos</artifactId>
             <version>${netty.version}</version>
             <classifier>osx-aarch_64</classifier>
-            <!--            <scope>runtime</scope>-->
         </dependency>
 
         <dependency>
