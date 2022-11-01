@@ -200,7 +200,7 @@ const Filters: React.FC<FiltersProps> = ({
       filterQueryType: queryType,
       attempt: nextAttempt,
       limit: PER_PAGE,
-      page: page || (searchParams.get('page') as string),
+      page: page || 0,
       seekDirection,
       keySerde: keySerde || (searchParams.get('keySerde') as string),
       valueSerde: valueSerde || (searchParams.get('valueSerde') as string),
