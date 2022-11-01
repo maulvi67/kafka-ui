@@ -74,7 +74,7 @@ describe('MessagesTable', () => {
     it('should check if next button and previous is disabled isLive Param', () => {
       setUpComponent(searchParams, { ...contextValue, isLive: true });
       expect(screen.queryByText(/next/i)).toBeDisabled();
-      expect(screen.queryByText(/Back/i)).toBeDisabled();
+      expect(screen.queryByText(/back/i)).toBeDisabled();
     });
 
     it('should check the display of the loader element', () => {
