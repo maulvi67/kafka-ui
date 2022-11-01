@@ -71,9 +71,10 @@ describe('MessagesTable', () => {
   });
 
   describe('Custom Setup with different props value', () => {
-    it('should check if next click is disabled isLive Param', () => {
+    it('should check if next button and previous is disabled isLive Param', () => {
       setUpComponent(searchParams, { ...contextValue, isLive: true });
       expect(screen.queryByText(/next/i)).toBeDisabled();
+      expect(screen.queryByText(/Back/i)).toBeDisabled();
     });
 
     it('should check the display of the loader element', () => {
