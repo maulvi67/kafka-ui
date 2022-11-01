@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import TopicMessagesContext from 'components/contexts/TopicMessagesContext';
 import { SeekDirection, SerdeUsage } from 'generated-sources';
 import { useSearchParams } from 'react-router-dom';
-import { ConsumingMode, useSerdes } from 'lib/hooks/api/topicMessages';
+import { useSerdes } from 'lib/hooks/api/topicMessages';
 import useAppParams from 'lib/hooks/useAppParams';
 import { RouteParamsClusterTopic } from 'lib/paths';
 import { getDefaultSerdeName } from 'components/Topics/Topic/MessagesV2/utils/getDefaultSerdeName';
@@ -33,7 +33,6 @@ export const SeekDirectionOptions = Object.values(SeekDirectionOptionsObj);
 const Messages: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { clusterName, topicName } = useAppParams<RouteParamsClusterTopic>();
-  const mode = searchParams.get('m') as ConsumingMode;
 
   const { data: serdes = {} } = useSerdes({
     clusterName,
@@ -42,10 +41,6 @@ const Messages: React.FC = () => {
   });
 
   React.useEffect(() => {
-    if (!mode) {
-      searchParams.set('m', 'newest');
-    }
-
     if (!searchParams.get('keySerde')) {
       searchParams.set('keySerde', getDefaultSerdeName(serdes.key || []));
     }
@@ -69,17 +64,14 @@ const Messages: React.FC = () => {
   const changeSeekDirection = useCallback((val: string) => {
     switch (val) {
       case SeekDirection.FORWARD:
-        searchParams.set('m', 'newest');
         setSeekDirection(SeekDirection.FORWARD);
         setIsLive(SeekDirectionOptionsObj[SeekDirection.FORWARD].isLive);
         break;
       case SeekDirection.BACKWARD:
-        searchParams.set('m', 'oldest');
         setSeekDirection(SeekDirection.BACKWARD);
         setIsLive(SeekDirectionOptionsObj[SeekDirection.BACKWARD].isLive);
         break;
       case SeekDirection.TAILING:
-        searchParams.set('m', 'live');
         setSeekDirection(SeekDirection.TAILING);
         setIsLive(SeekDirectionOptionsObj[SeekDirection.TAILING].isLive);
         break;

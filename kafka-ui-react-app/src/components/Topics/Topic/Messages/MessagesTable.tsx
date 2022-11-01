@@ -10,7 +10,6 @@ import {
 import TopicMessagesContext from 'components/contexts/TopicMessagesContext';
 import { useAppSelector } from 'lib/hooks/redux';
 import { Button } from 'components/common/Button/Button';
-import handleNextPageClick from 'components/Topics/Topic/MessagesV2/utils/handleNextPageClick';
 import { ConsumingMode } from 'lib/hooks/api/topicMessages';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MESSAGES_PER_PAGE } from 'lib/constants';
@@ -20,6 +19,7 @@ import Message from './Message';
 
 const MessagesTable: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const page = searchParams.get('page');
   const { isLive } = useContext(TopicMessagesContext);
   const navigate = useNavigate();
 
@@ -41,8 +41,10 @@ const MessagesTable: React.FC = () => {
   const isPrevPageButtonDisabled =
     isPaginationDisabled || !searchParams.get('page');
 
-  const handleNextPage = () =>
-    handleNextPageClick(messages, searchParams, setSearchParams);
+  const handleNextPage = () => {
+    searchParams.set('page', String(Number(page || 0) + 1));
+    setSearchParams(searchParams);
+  };
 
   return (
     <>
