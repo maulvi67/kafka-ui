@@ -32,8 +32,7 @@ const MessagesTable: React.FC = () => {
     isTailing || isFetching || !searchParams.get('seekTo');
 
   const isNextPageButtonDisabled =
-    isPaginationDisabled ||
-    messages.length < Number(searchParams.get('perPage') || MESSAGES_PER_PAGE);
+    isPaginationDisabled || messages.length < Number(MESSAGES_PER_PAGE);
   const isPrevPageButtonDisabled =
     isPaginationDisabled || !Number(searchParams.get('page'));
 
