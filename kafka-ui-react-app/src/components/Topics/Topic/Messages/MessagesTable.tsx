@@ -10,7 +10,6 @@ import {
 import TopicMessagesContext from 'components/contexts/TopicMessagesContext';
 import { useAppSelector } from 'lib/hooks/redux';
 import { Button } from 'components/common/Button/Button';
-import { ConsumingMode } from 'lib/hooks/api/topicMessages';
 import { useSearchParams } from 'react-router-dom';
 import { MESSAGES_PER_PAGE } from 'lib/constants';
 import * as S from 'components/common/NewTable/Table.styled';
@@ -25,9 +24,7 @@ const MessagesTable: React.FC = () => {
   const messages = useAppSelector(getTopicMessges);
   const isFetching = useAppSelector(getIsTopicMessagesFetching);
 
-  const mode = searchParams.get('m') as ConsumingMode;
-
-  const isTailing = mode === 'live' && isFetching;
+  const isTailing = isLive && isFetching;
 
   // Pagination is disabled in live mode, also we don't want to show the button
   // if we are fetching the messages or if we are at the end of the topic
