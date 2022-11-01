@@ -11,7 +11,7 @@ import TopicMessagesContext from 'components/contexts/TopicMessagesContext';
 import { useAppSelector } from 'lib/hooks/redux';
 import { Button } from 'components/common/Button/Button';
 import { ConsumingMode } from 'lib/hooks/api/topicMessages';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { MESSAGES_PER_PAGE } from 'lib/constants';
 import * as S from 'components/common/NewTable/Table.styled';
 
@@ -21,7 +21,6 @@ const MessagesTable: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = searchParams.get('page');
   const { isLive } = useContext(TopicMessagesContext);
-  const navigate = useNavigate();
 
   const messages = useAppSelector(getTopicMessges);
   const isFetching = useAppSelector(getIsTopicMessagesFetching);
@@ -39,10 +38,15 @@ const MessagesTable: React.FC = () => {
     isPaginationDisabled ||
     messages.length < Number(searchParams.get('perPage') || MESSAGES_PER_PAGE);
   const isPrevPageButtonDisabled =
-    isPaginationDisabled || !searchParams.get('page');
+    isPaginationDisabled || !Number(searchParams.get('page'));
 
   const handleNextPage = () => {
     searchParams.set('page', String(Number(page || 0) + 1));
+    setSearchParams(searchParams);
+  };
+
+  const handlePrevPage = () => {
+    searchParams.set('page', String(Number(page || 0) - 1));
     setSearchParams(searchParams);
   };
 
@@ -92,7 +96,7 @@ const MessagesTable: React.FC = () => {
             buttonType="secondary"
             buttonSize="L"
             disabled={isPrevPageButtonDisabled}
-            onClick={() => navigate(-1)}
+            onClick={handlePrevPage}
           >
             ← Back
           </Button>
